@@ -29,6 +29,7 @@ class BaseSupervisedTrainer:
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.optimizer = optimizer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
 
         self.train_dataset, self.eval_dataset = train_test_split(
             dataset, self.hyperparams["train_test_split"]
