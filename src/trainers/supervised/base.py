@@ -26,7 +26,7 @@ class BaseSupervisedTrainer:
         save_dir: Optional[str] = None,
         save_name: Optional[str] = "model",
     ) -> None:
-        self.model = deepcopy(model)
+        self.model = model
         self.loss_fn = loss_fn
         self.config = config
         self.train_metrics = deepcopy(metrics)
