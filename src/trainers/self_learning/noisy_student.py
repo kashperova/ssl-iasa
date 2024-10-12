@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import ConcatDataset, Dataset
 from torchvision.transforms import RandAugment
 
-from config.train_config import SLConfig
+from config.train_config import BaseTrainConfig
 from trainers.self_learning.base import BaseSLTrainer
 from datasets.augmented import AugmentedDataset
 from datasets.base import BaseDataset
@@ -27,7 +27,8 @@ class NoisyStudentTrainer(BaseSLTrainer):
         student_optimizer: Optimizer,
         teacher_lr_scheduler: LRScheduler,
         student_lr_scheduler: LRScheduler,
-        config: SLConfig,
+        teacher_config: BaseTrainConfig,
+        student_config: BaseTrainConfig,
         metrics: Metrics,
         save_dir: Optional[str] = None,
     ) -> None:
@@ -41,7 +42,8 @@ class NoisyStudentTrainer(BaseSLTrainer):
             student_optimizer=student_optimizer,
             teacher_lr_scheduler=teacher_lr_scheduler,
             student_lr_scheduler=student_lr_scheduler,
-            config=config,
+            teacher_config=teacher_config,
+            student_config=student_config,
             metrics=metrics,
             save_dir=save_dir,
         )

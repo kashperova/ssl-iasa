@@ -7,7 +7,7 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import Dataset
 
-from config.train_config import SLConfig
+from config.train_config import BaseTrainConfig
 from datasets.base import BaseDataset
 from trainers.supervised.base import BaseSupervisedTrainer
 from utils.metrics import Metrics
@@ -25,7 +25,8 @@ class BaseSLTrainer:
             student_optimizer: Optimizer,
             teacher_lr_scheduler: LRScheduler,
             student_lr_scheduler: LRScheduler,
-            config: SLConfig,
+            teacher_config: BaseTrainConfig,
+            student_config: BaseTrainConfig,
             metrics: Metrics,
             save_dir: Optional[str] = None,
             save_teacher_name: Optional[str] = "teacher",
@@ -40,7 +41,8 @@ class BaseSLTrainer:
         self.loss_fn = loss_fn
         self.labeled_dataset = labeled_dataset
         self.unlabeled_dataset = unlabeled_dataset
-        self.config = config
+        self.teacher_config = teacher_config
+        self.student_config = student_config
         self._metrics = metrics
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.save_teacher_name = save_teacher_name
@@ -52,7 +54,7 @@ class BaseSLTrainer:
             optimizer=self.teacher_optimizer,
             lr_scheduler=self.teacher_lr_scheduler,
             dataset=self.labeled_dataset,
-            config=self.config.teacher,
+            config=self.teacher_config,
             metrics=deepcopy(self._metrics),
             save_dir=self.save_dir,
             save_name=self.save_teacher_name
@@ -80,7 +82,7 @@ class BaseSLTrainer:
             optimizer=self.student_optimizer,
             lr_scheduler=self.student_lr_scheduler,
             dataset=student_dataset,
-            config=self.config.student,
+            config=self.student_config,
             metrics=deepcopy(self._metrics),
             save_dir=self.save_dir,
             save_name=self.save_student_name
