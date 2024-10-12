@@ -50,6 +50,7 @@ class NoisyStudentTrainer(BaseSLTrainer):
         self.augment = RandAugment(num_ops=2, magnitude=9)
 
     def set_student_dataset(self) -> Dataset:
+        print(f"Pseudo Label Annotation")
         pseudo_dataset = PseudoLabelAnnotator(model=self.teacher_model).mark(
             self.unlabeled_dataset
         )
@@ -57,4 +58,3 @@ class NoisyStudentTrainer(BaseSLTrainer):
         labeled_dataset = AugmentedDataset(dataset=self.labeled_dataset, augment_fn=self.augment)
 
         return ConcatDataset([pseudo_dataset, labeled_dataset])
-
