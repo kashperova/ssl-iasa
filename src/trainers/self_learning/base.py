@@ -9,6 +9,7 @@ from torch.utils.data import Dataset
 from config.train_config import SLConfig
 from datasets.base import BaseDataset
 from trainers.supervised.base import BaseSupervisedTrainer
+from utils.metrics import Metrics
 
 
 class BaseSLTrainer:
@@ -22,7 +23,10 @@ class BaseSLTrainer:
             teacher_optimizer: Optimizer,
             student_optimizer: Optimizer,
             config: SLConfig,
+            metrics: Metrics,
             save_dir: Optional[str] = None,
+            save_teacher_name: Optional[str] = "teacher",
+            save_student_name: Optional[str] = "student",
     ) -> None:
         self.teacher_model = deepcopy(teacher_model)
         self.student_model = deepcopy(student_model)
@@ -32,7 +36,10 @@ class BaseSLTrainer:
         self.labeled_dataset = labeled_dataset
         self.unlabeled_dataset = unlabeled_dataset
         self.config = config
+        self.metrics = metrics
         self.save_dir = os.getcwd() if save_dir is None else save_dir
+        self.save_teacher_name = save_teacher_name
+        self.save_student_name = save_student_name
 
         self.teacher_trainer = BaseSupervisedTrainer(
             model=self.teacher_model,
@@ -40,7 +47,9 @@ class BaseSLTrainer:
             optimizer=self.teacher_optimizer,
             dataset=self.labeled_dataset,
             config=self.config.teacher,
-            save_dir=self.save_dir
+            metrics=self.metrics,
+            save_dir=self.save_dir,
+            save_name=self.save_teacher_name
         )
         self.student_trainer = None
 
@@ -65,15 +74,17 @@ class BaseSLTrainer:
             optimizer=self.student_optimizer,
             dataset=student_dataset,
             config=self.config.student,
-            save_dir=self.save_dir
+            metrics=self.metrics,
+            save_dir=self.save_dir,
+            save_name=self.save_student_name
         )
         self.student_trainer.train(verbose=verbose)
 
     def save_teacher(self):
-        self.teacher_trainer.save("teacher")
+        self.teacher_trainer.save()
 
     def save_student(self):
-        self.student_trainer.save("student")
+        self.student_trainer.save()
 
     def plot_teacher_losses(self):
         self.teacher_trainer.plot_losses()
