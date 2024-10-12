@@ -31,8 +31,8 @@ class BaseSLTrainer:
             save_teacher_name: Optional[str] = "teacher",
             save_student_name: Optional[str] = "student",
     ) -> None:
-        self.teacher_model = deepcopy(teacher_model)
-        self.student_model = deepcopy(student_model)
+        self.teacher_model = teacher_model
+        self.student_model = student_model
         self.teacher_optimizer = teacher_optimizer
         self.student_optimizer = student_optimizer
         self.teacher_lr_scheduler = teacher_lr_scheduler
@@ -41,7 +41,7 @@ class BaseSLTrainer:
         self.labeled_dataset = labeled_dataset
         self.unlabeled_dataset = unlabeled_dataset
         self.config = config
-        self.metrics = metrics
+        self._metrics = metrics
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.save_teacher_name = save_teacher_name
         self.save_student_name = save_student_name
@@ -50,10 +50,10 @@ class BaseSLTrainer:
             model=self.teacher_model,
             loss_fn=self.loss_fn,
             optimizer=self.teacher_optimizer,
-            scheduler=self.teacher_lr_scheduler,
+            lr_scheduler=self.teacher_lr_scheduler,
             dataset=self.labeled_dataset,
             config=self.config.teacher,
-            metrics=self.metrics,
+            metrics=deepcopy(self._metrics),
             save_dir=self.save_dir,
             save_name=self.save_teacher_name
         )
@@ -78,10 +78,10 @@ class BaseSLTrainer:
             model=self.teacher_model,
             loss_fn=self.loss_fn,
             optimizer=self.student_optimizer,
-            scheduler=self.student_lr_scheduler,
+            lr_scheduler=self.student_lr_scheduler,
             dataset=student_dataset,
             config=self.config.student,
-            metrics=self.metrics,
+            metrics=deepcopy(self._metrics),
             save_dir=self.save_dir,
             save_name=self.save_student_name
         )

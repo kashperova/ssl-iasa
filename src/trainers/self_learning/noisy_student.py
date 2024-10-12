@@ -12,6 +12,8 @@ from datasets.augmented import AugmentedDataset
 from datasets.base import BaseDataset
 from utils.annotator import PseudoLabelAnnotator
 
+from utils.metrics import Metrics
+
 
 class NoisyStudentTrainer(BaseSLTrainer):
     def __init__(
@@ -26,6 +28,7 @@ class NoisyStudentTrainer(BaseSLTrainer):
         teacher_lr_scheduler: LRScheduler,
         student_lr_scheduler: LRScheduler,
         config: SLConfig,
+        metrics: Metrics,
         save_dir: Optional[str] = None,
     ) -> None:
         super().__init__(
@@ -39,6 +42,7 @@ class NoisyStudentTrainer(BaseSLTrainer):
             teacher_lr_scheduler=teacher_lr_scheduler,
             student_lr_scheduler=student_lr_scheduler,
             config=config,
+            metrics=metrics,
             save_dir=save_dir,
         )
         self.augment = RandAugment(num_ops=2, magnitude=9)
