@@ -47,6 +47,7 @@ class BaseSLTrainer:
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.save_teacher_name = save_teacher_name
         self.save_student_name = save_student_name
+        self.teacher_trained = False
 
         self.teacher_trainer = BaseSupervisedTrainer(
             model=self.teacher_model,
@@ -61,19 +62,16 @@ class BaseSLTrainer:
         )
         self.student_trainer = None
 
-    @property
-    def hyperparams(self) -> Dict[str, Any]:
-        return self.config.params
-
     def set_student_dataset(self) -> Dataset:
         raise NotImplementedError
 
     def train_teacher(self, verbose: Optional[bool] = True):
         self.teacher_trainer.train(verbose=verbose)
+        self.teacher_trained = True
 
     def train_student(self, verbose: Optional[bool] = True):
-        if self.student_trainer is None:
-            raise ValueError("Student dataset not configured")
+        if not self.teacher_trained:
+            raise ValueError("Teacher should be trained before student training.")
 
         student_dataset = self.set_student_dataset()
         self.student_trainer = BaseSupervisedTrainer(
