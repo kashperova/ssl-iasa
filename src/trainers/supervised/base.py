@@ -25,6 +25,7 @@ class BaseSupervisedTrainer:
         metrics: Metrics,
         save_dir: Optional[str] = None,
         save_name: Optional[str] = "model",
+        grad_norm: Optional[float] = 1.0
     ) -> None:
         self.model = model
         self.loss_fn = loss_fn
@@ -33,6 +34,7 @@ class BaseSupervisedTrainer:
         self.eval_metrics = deepcopy(metrics)
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.save_name = save_name
+        self.grad_norm = grad_norm
         self.optimizer = optimizer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
@@ -67,9 +69,11 @@ class BaseSupervisedTrainer:
             outputs = self.model(inputs)
             loss = self.loss_fn(outputs, labels)
             loss.backward()
+            nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
             self.optimizer.step()
             running_loss += loss.item()
             self.update_metrics(self.train_metrics, outputs, labels)
+
 
         return running_loss / len(self.train_loader)
 
@@ -85,6 +89,7 @@ class BaseSupervisedTrainer:
                 loss = self.loss_fn(outputs, labels)
                 running_loss += loss.item()
                 self.update_metrics(self.eval_metrics, outputs, labels)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_norm)
 
         if verbose and not training:
             print(f"\nValidation metrics: {str(self.eval_metrics)}")
