@@ -68,6 +68,6 @@ class Metrics:
     def __str__(self) -> str:
         res = "\n"
         for k, v in self.metrics.items():
-            res += f"{k.capitalize()}: {v.compute()}\n"
+            res += f"{k.capitalize()}: {round(v.compute(), 4)}\n"
 
         return res
