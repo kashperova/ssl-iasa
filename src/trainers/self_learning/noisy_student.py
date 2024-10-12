@@ -2,6 +2,7 @@ from typing import Callable, Optional, Union
 
 from torch import nn
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import ConcatDataset, Dataset
 from torchvision.transforms import RandAugment
 
@@ -22,6 +23,8 @@ class NoisyStudentTrainer(BaseSLTrainer):
         unlabeled_dataset: BaseDataset,
         teacher_optimizer: Optimizer,
         student_optimizer: Optimizer,
+        teacher_lr_scheduler: LRScheduler,
+        student_lr_scheduler: LRScheduler,
         config: SLConfig,
         save_dir: Optional[str] = None,
     ) -> None:
@@ -33,6 +36,8 @@ class NoisyStudentTrainer(BaseSLTrainer):
             unlabeled_dataset=unlabeled_dataset,
             teacher_optimizer=teacher_optimizer,
             student_optimizer=student_optimizer,
+            teacher_lr_scheduler=teacher_lr_scheduler,
+            student_lr_scheduler=student_lr_scheduler,
             config=config,
             save_dir=save_dir,
         )

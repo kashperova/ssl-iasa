@@ -5,6 +5,7 @@ from typing import Callable, Union, Dict, Any, Optional, Tuple
 import torch
 from torch import nn, Tensor
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader, Dataset, random_split
 from tqdm import tqdm
 
@@ -20,6 +21,7 @@ class BaseSupervisedTrainer:
         model: Union[nn.Module, Callable],
         loss_fn: Callable,
         optimizer: Optimizer,
+        lr_scheduler: LRScheduler,
         dataset: BaseDataset,
         config: BaseTrainConfig,
         metrics: Metrics,
@@ -36,6 +38,7 @@ class BaseSupervisedTrainer:
         self.save_name = save_name
         self.grad_norm = grad_norm
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
@@ -107,6 +110,7 @@ class BaseSupervisedTrainer:
             self.eval_metrics.reset()
             eval_loss = self.eval_step(verbose=verbose, training=True)
             self.eval_losses.append(eval_loss)
+            self.lr_scheduler.step(eval_loss)
 
             if verbose:
                 print(f"Epoch [{i + 1}/{epochs}], Train Loss: {train_loss:.4f}, Valid Loss: {eval_loss:.4f}")

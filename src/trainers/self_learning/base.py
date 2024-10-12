@@ -4,6 +4,7 @@ from typing import Callable, Union, Dict, Any, Optional
 
 from torch import nn
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import Dataset
 
 from config.train_config import SLConfig
@@ -22,6 +23,8 @@ class BaseSLTrainer:
             unlabeled_dataset: BaseDataset,
             teacher_optimizer: Optimizer,
             student_optimizer: Optimizer,
+            teacher_lr_scheduler: LRScheduler,
+            student_lr_scheduler: LRScheduler,
             config: SLConfig,
             metrics: Metrics,
             save_dir: Optional[str] = None,
@@ -32,6 +35,8 @@ class BaseSLTrainer:
         self.student_model = deepcopy(student_model)
         self.teacher_optimizer = teacher_optimizer
         self.student_optimizer = student_optimizer
+        self.teacher_lr_scheduler = teacher_lr_scheduler
+        self.student_lr_scheduler = student_lr_scheduler
         self.loss_fn = loss_fn
         self.labeled_dataset = labeled_dataset
         self.unlabeled_dataset = unlabeled_dataset
@@ -45,6 +50,7 @@ class BaseSLTrainer:
             model=self.teacher_model,
             loss_fn=self.loss_fn,
             optimizer=self.teacher_optimizer,
+            scheduler=self.teacher_lr_scheduler,
             dataset=self.labeled_dataset,
             config=self.config.teacher,
             metrics=self.metrics,
@@ -72,6 +78,7 @@ class BaseSLTrainer:
             model=self.teacher_model,
             loss_fn=self.loss_fn,
             optimizer=self.student_optimizer,
+            scheduler=self.student_lr_scheduler,
             dataset=student_dataset,
             config=self.config.student,
             metrics=self.metrics,
