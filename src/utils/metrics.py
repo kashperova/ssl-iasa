@@ -66,8 +66,8 @@ class Metrics:
             metric.reset()
 
     def __str__(self) -> str:
-        res = ""
+        res = "\n"
         for k, v in self.metrics.items():
-            res += f"{k.upper()}: {v.compute()}\n"
+            res += f"{k.capitalize()}: {v.compute()}\n"
 
         return res

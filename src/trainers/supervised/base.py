@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Callable, Union, Dict, Any, Optional, Tuple
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset, random_split
 from tqdm import tqdm
@@ -29,7 +29,8 @@ class BaseSupervisedTrainer:
         self.model = deepcopy(model)
         self.loss_fn = loss_fn
         self.config = config
-        self.metrics = metrics
+        self.train_metrics = deepcopy(metrics)
+        self.eval_metrics = deepcopy(metrics)
         self.save_dir = os.getcwd() if save_dir is None else save_dir
         self.save_name = save_name
         self.optimizer = optimizer
@@ -62,16 +63,17 @@ class BaseSupervisedTrainer:
         running_loss = 0.0
         for inputs, labels in self.train_loader:
             inputs, labels = inputs.to(self.device), labels.to(self.device)
-            self.optimizer.zero_grad()
+            self.model.zero_grad()
             outputs = self.model(inputs)
             loss = self.loss_fn(outputs, labels)
             loss.backward()
             self.optimizer.step()
             running_loss += loss.item()
+            self.update_metrics(self.train_metrics, outputs, labels)
 
         return running_loss / len(self.train_loader)
 
-    def eval_step(self, verbose: Optional[bool] = True):
+    def eval_step(self, verbose: Optional[bool] = True, training: Optional[bool] = False):
         self.model.eval()
         running_loss = 0.0
 
@@ -82,15 +84,10 @@ class BaseSupervisedTrainer:
                 outputs = self.model(inputs)
                 loss = self.loss_fn(outputs, labels)
                 running_loss += loss.item()
+                self.update_metrics(self.eval_metrics, outputs, labels)
 
-                if self.metrics.task in CLASSIFICATION_TASKS:
-                    _, predicted = torch.max(outputs, 1)
-                    self.metrics.update(labels, predicted)
-                else:
-                    self.metrics.update(labels, outputs)
-
-        if verbose:
-            print(str(self.metrics))
+        if verbose and not training:
+            print(f"\nValidation metrics: {str(self.eval_metrics)}")
 
         return running_loss / len(self.eval_loader)
 
@@ -98,15 +95,18 @@ class BaseSupervisedTrainer:
         epochs, best_loss = self.hyperparams["epochs"], float("inf")
 
         for i in tqdm(range(epochs), desc="Training"):
+            self.train_metrics.reset()
             train_loss = self.train_step()
             self.train_losses.append(train_loss)
 
-            self.metrics.reset()
-            eval_loss = self.eval_step(verbose)
+            self.eval_metrics.reset()
+            eval_loss = self.eval_step(verbose=verbose, training=True)
             self.eval_losses.append(eval_loss)
 
             if verbose:
                 print(f"Epoch [{i + 1}/{epochs}], Train Loss: {train_loss:.4f}, Valid Loss: {eval_loss:.4f}")
+                print(f"\nTraining metrics: {str(self.train_metrics)}")
+                print(f"\nValidation metrics: {str(self.eval_metrics)}")
 
             if eval_loss < best_loss:
                 best_loss = eval_loss
@@ -115,7 +115,7 @@ class BaseSupervisedTrainer:
         return self.load_model()
 
     def eval(self):
-        self.metrics.reset()
+        self.eval_metrics.reset()
         self.eval_step()
 
     def load_model(self) -> nn.Module:
@@ -127,6 +127,14 @@ class BaseSupervisedTrainer:
 
     def plot_losses(self):
         plot_losses(self.train_losses, self.eval_losses)
+
+    @staticmethod
+    def update_metrics(metrics: Metrics, outputs: Tensor, labels: Tensor):
+        if metrics.task in CLASSIFICATION_TASKS:
+            _, predicted = torch.max(outputs, 1)
+            metrics.update(labels, predicted)
+        else:
+            metrics.update(labels, outputs)
 
     @staticmethod
     def train_test_split(dataset: Dataset, split_size: float) -> Tuple[Dataset, Dataset]:
