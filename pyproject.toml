@@ -11,6 +11,7 @@ torchvision = "0.19.1"
 plotly = "5.17.0"
 tqdm = "4.66.5"
 matplotlib = "3.9.2"
+torchmetrics = "1.4.3"
 
 
 [build-system]

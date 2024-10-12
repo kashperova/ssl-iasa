@@ -16,3 +16,10 @@ class BaseTrainConfig:
 class SLConfig(BaseTrainConfig):
     teacher: BaseTrainConfig = None
     student: BaseTrainConfig = None
+
+    def set(self, teacher: Dict[str, Any], student: Dict[str, Any]) -> None:
+        for k, v in teacher.items():
+            setattr(self.teacher, k, v)
+
+        for k, v in student.items():
+            setattr(self.student, k, v)
