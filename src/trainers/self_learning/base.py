@@ -87,7 +87,7 @@ class BaseSLTrainer:
 
         self.student_dataset = self.set_student_dataset()
         self.student_trainer = BaseSupervisedTrainer(
-            model=self.teacher_model,
+            model=self.student_model,
             loss_fn=self.loss_fn,
             optimizer=self.student_optimizer,
             lr_scheduler=self.student_lr_scheduler,
