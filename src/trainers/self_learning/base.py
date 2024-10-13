@@ -86,7 +86,6 @@ class BaseSLTrainer:
             raise ValueError("Teacher should be trained before student training.")
 
         self.student_dataset = self.set_student_dataset()
-        print(f"Student dataset: {self.student_dataset[0]}", flush=True)
         self.student_trainer = BaseSupervisedTrainer(
             model=self.teacher_model,
             loss_fn=self.loss_fn,
