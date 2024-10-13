@@ -1,7 +1,8 @@
 import os
 from copy import deepcopy
-from typing import Callable, Union, Dict, Any, Optional
+from typing import Callable, Union, Optional
 
+import torch
 from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -39,7 +40,7 @@ class BaseSLTrainer:
         self.teacher_lr_scheduler = teacher_lr_scheduler
         self.student_lr_scheduler = student_lr_scheduler
         self.loss_fn = loss_fn
-        self.labeled_dataset = labeled_dataset
+        self.labeled_dataset = self.to_base_dataset(labeled_dataset)
         self.unlabeled_dataset = unlabeled_dataset
         self.teacher_config = teacher_config
         self.student_config = student_config
@@ -62,6 +63,17 @@ class BaseSLTrainer:
         )
         self.student_trainer = None
 
+    @staticmethod
+    def to_base_dataset(dataset: Dataset) -> BaseDataset:
+        if isinstance(dataset, BaseDataset):
+            return dataset
+
+        inputs, labels = zip(*[dataset[i] for i in range(len(dataset))])
+        inputs = torch.stack(inputs)
+        labels = torch.tensor(labels)
+
+        return BaseDataset(inputs, labels)
+
     def set_student_dataset(self) -> Dataset:
         raise NotImplementedError
 
@@ -73,13 +85,14 @@ class BaseSLTrainer:
         if not self.teacher_trained:
             raise ValueError("Teacher should be trained before student training.")
 
-        student_dataset = self.set_student_dataset()
+        self.student_dataset = self.set_student_dataset()
+        print(f"Student dataset: {self.student_dataset[0]}", flush=True)
         self.student_trainer = BaseSupervisedTrainer(
             model=self.teacher_model,
             loss_fn=self.loss_fn,
             optimizer=self.student_optimizer,
             lr_scheduler=self.student_lr_scheduler,
-            dataset=student_dataset,
+            dataset=self.student_dataset,
             config=self.student_config,
             metrics=deepcopy(self._metrics),
             save_dir=self.save_dir,
