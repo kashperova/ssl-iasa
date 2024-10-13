@@ -26,6 +26,9 @@ class PseudoLabelAnnotator:
                 inputs.append(x.cpu())
                 pseudo_labels.append(labels.cpu())
 
-        inputs = torch.cat(inputs)
-        pseudo_labels = torch.cat(pseudo_labels)
+        inputs = torch.cat(inputs, dim=0)
+        pseudo_labels = torch.cat(pseudo_labels, dim=0)
+
+        assert inputs.size(0) == pseudo_labels.size(0), "mismatch between inputs and pseudo-labels."
+
         return BaseDataset(inputs=inputs, labels=pseudo_labels)

@@ -1,14 +1,13 @@
+from copy import deepcopy
 from typing import Callable, Optional, Union
 
 from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import ConcatDataset, Dataset
-from torchvision.transforms import RandAugment
 
 from config.train_config import BaseTrainConfig
 from trainers.self_learning.base import BaseSLTrainer
-from datasets.augmented import AugmentedDataset
 from datasets.base import BaseDataset
 from utils.annotator import PseudoLabelAnnotator
 
@@ -30,6 +29,7 @@ class NoisyStudentTrainer(BaseSLTrainer):
         teacher_config: BaseTrainConfig,
         student_config: BaseTrainConfig,
         metrics: Metrics,
+        student_transform: Callable,
         save_dir: Optional[str] = None,
     ) -> None:
         super().__init__(
@@ -47,14 +47,15 @@ class NoisyStudentTrainer(BaseSLTrainer):
             metrics=metrics,
             save_dir=save_dir,
         )
-        self.augment = RandAugment(num_ops=2, magnitude=9)
+        self.student_transform = student_transform
 
     def set_student_dataset(self) -> Dataset:
         print(f"Pseudo Label Annotation")
         pseudo_dataset = PseudoLabelAnnotator(model=self.teacher_model).mark(
             self.unlabeled_dataset
         )
-        pseudo_dataset = AugmentedDataset(dataset=pseudo_dataset, augment_fn=self.augment)
-        labeled_dataset = AugmentedDataset(dataset=self.labeled_dataset, augment_fn=self.augment)
+        pseudo_dataset.transform = self.student_transform
+        labeled_dataset = deepcopy(self.labeled_dataset)
+        labeled_dataset.transform = self.student_transform
 
         return ConcatDataset([pseudo_dataset, labeled_dataset])
